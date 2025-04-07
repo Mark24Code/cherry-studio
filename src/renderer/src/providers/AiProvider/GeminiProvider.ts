@@ -18,7 +18,8 @@ import {
   Part,
   RequestOptions,
   SafetySetting,
-  TextPart
+  TextPart,
+  Tool
 } from '@google/generative-ai'
 import { isGemmaModel, isWebSearchModel } from '@renderer/config/models'
 import { getStoreSetting } from '@renderer/hooks/useSettings'
@@ -33,12 +34,8 @@ import {
 import WebSearchService from '@renderer/services/WebSearchService'
 import { Assistant, FileType, FileTypes, MCPToolResponse, Message, Model, Provider, Suggestion } from '@renderer/types'
 import { removeSpecialCharactersForTopicName } from '@renderer/utils'
-import {
-  callMCPTool,
-  geminiFunctionCallToMcpTool,
-  mcpToolsToGeminiTools,
-  upsertMCPToolResponse
-} from '@renderer/utils/mcp-tools'
+import { callMCPTool, geminiFunctionCallToMcpTool, upsertMCPToolResponse } from '@renderer/utils/mcp-tools'
+import { buildSystemPrompt } from '@renderer/utils/prompt'
 import { MB } from '@shared/config/constant'
 import axios from 'axios'
 import { isEmpty, takeRight } from 'lodash'
@@ -230,7 +227,14 @@ export default class GeminiProvider extends BaseProvider {
         history.push(await this.getMessageContents(message))
       }
 
-      const tools = mcpToolsToGeminiTools(mcpTools)
+      let systemInstruction = assistant.prompt
+
+      if (mcpTools && mcpTools.length > 0) {
+        systemInstruction = buildSystemPrompt(assistant.prompt || '', mcpTools)
+      }
+
+      // const tools = mcpToolsToGeminiTools(mcpTools)
+      const tools: Tool[] = []
       const toolResponses: MCPToolResponse[] = []
 
       if (!WebSearchService.isOverwriteEnabled() && assistant.enableWebSearch && isWebSearchModel(model)) {
@@ -243,7 +247,7 @@ export default class GeminiProvider extends BaseProvider {
       const geminiModel = this.sdk.getGenerativeModel(
         {
           model: model.id,
-          ...(isGemmaModel(model) ? {} : { systemInstruction: assistant.prompt }),
+          ...(isGemmaModel(model) ? {} : { systemInstruction: systemInstruction }),
           safetySettings: this.getSafetySettings(model.id),
           tools: tools,
           generationConfig: {
@@ -268,7 +272,7 @@ export default class GeminiProvider extends BaseProvider {
               {
                 text:
                   '<start_of_turn>user\n' +
-                  assistant.prompt +
+                  systemInstruction +
                   '<end_of_turn>\n' +
                   '<start_of_turn>user\n' +
                   messageContents.parts[0].text +

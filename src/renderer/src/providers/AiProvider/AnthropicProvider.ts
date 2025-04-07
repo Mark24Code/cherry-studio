@@ -17,13 +17,9 @@ import {
 } from '@renderer/services/MessagesService'
 import { Assistant, FileTypes, MCPToolResponse, Message, Model, Provider, Suggestion } from '@renderer/types'
 import { removeSpecialCharactersForTopicName } from '@renderer/utils'
-import {
-  anthropicToolUseToMcpTool,
-  callMCPTool,
-  mcpToolsToAnthropicTools,
-  upsertMCPToolResponse
-} from '@renderer/utils/mcp-tools'
-import { first, flatten, isEmpty, sum, takeRight } from 'lodash'
+import { anthropicToolUseToMcpTool, callMCPTool, upsertMCPToolResponse } from '@renderer/utils/mcp-tools'
+import { buildSystemPrompt } from '@renderer/utils/prompt'
+import { first, flatten, sum, takeRight } from 'lodash'
 import OpenAI from 'openai'
 
 import { CompletionsParams } from '.'
@@ -182,16 +178,21 @@ export default class AnthropicProvider extends BaseProvider {
 
     const userMessages = flatten(userMessagesParams)
     const lastUserMessage = _messages.findLast((m) => m.role === 'user')
-    const tools = mcpTools ? mcpToolsToAnthropicTools(mcpTools) : undefined
+    // const tools = mcpTools ? mcpToolsToAnthropicTools(mcpTools) : undefined
+
+    let systemPrompt = assistant.prompt
+    if (mcpTools && mcpTools.length > 0) {
+      systemPrompt = buildSystemPrompt(systemPrompt, mcpTools)
+    }
 
     const body: MessageCreateParamsNonStreaming = {
       model: model.id,
       messages: userMessages,
-      tools: isEmpty(tools) ? undefined : tools,
+      // tools: isEmpty(tools) ? undefined : tools,
       max_tokens: maxTokens || DEFAULT_MAX_TOKENS,
       temperature: this.getTemperature(assistant, model),
       top_p: this.getTopP(assistant, model),
-      system: assistant.prompt,
+      system: systemPrompt,
       // @ts-ignore thinking
       thinking: this.getReasoningEffort(assistant, model),
       ...this.getCustomParameters(assistant)
