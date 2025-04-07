@@ -1,6 +1,6 @@
 import { isReasoningModel } from '@renderer/config/models'
 import { getAssistantById } from '@renderer/services/AssistantService'
-import { MCPTool, MCPToolResponse, Message } from '@renderer/types'
+import { Message } from '@renderer/types'
 
 export function escapeDollarNumber(text: string) {
   let escapedText = ''
@@ -234,64 +234,4 @@ export function addImageFileToContents(messages: Message[]) {
   }
 
   return messages.map((message) => (message.role === 'assistant' ? updatedAssistantMessage : message))
-}
-
-export function withToolUse(message: Message, mcpTools: MCPTool[]) {
-  const toolUsePattern =
-    /<tool_use>([\s\S]*?)<name>([\s\S]*?)<\/name>([\s\S]*?)<arguments>([\s\S]*?)<\/arguments>([\s\S]*?)<\/tool_use>/g
-  let content = message.content
-  const tools: MCPToolResponse[] = []
-  let match
-
-  // Find all tool use blocks
-  while ((match = toolUsePattern.exec(message.content)) !== null) {
-    // const fullMatch = match[0]
-    const toolName = match[2].trim()
-    const toolArgs = match[4].trim()
-
-    // Try to parse the arguments as JSON
-    let parsedArgs
-    try {
-      parsedArgs = JSON.parse(toolArgs)
-    } catch (error) {
-      // If parsing fails, use the string as is
-      parsedArgs = toolArgs
-    }
-    console.log(`Parsed arguments for tool "${toolName}":`, parsedArgs)
-    const mcpTool = mcpTools.find((tool) => tool.id === toolName)
-    if (!mcpTool) {
-      console.error(`Tool "${toolName}" not found in MCP tools`)
-      continue
-    }
-
-    // Add to tools array
-    tools.push({
-      id: toolName,
-      tool: {
-        ...mcpTool,
-        inputSchema: parsedArgs
-      },
-      status: 'pending'
-    })
-
-    // Remove the tool use block from the content
-    // content = content.replace(fullMatch, '')
-  }
-
-  // Clean up any extra newlines that might have been created
-  content = content.replace(/\n\s*\n\s*\n/g, '\n\n').trim()
-
-  // Only update metadata if tools were found
-  if (tools.length > 0) {
-    return {
-      ...message,
-      content: content,
-      metadata: {
-        ...message.metadata,
-        mcpTools: tools
-      }
-    }
-  }
-
-  return message
 }
