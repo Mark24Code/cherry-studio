@@ -22,7 +22,6 @@ import { MCPServer, MCPTool, MCPToolResponse } from '@renderer/types'
 import { ChatCompletionMessageToolCall, ChatCompletionTool } from 'openai/resources'
 
 import { ChunkCallbackData, CompletionsParams } from '../providers/AiProvider'
-import { parseToolUse } from './formats'
 
 const ensureValidSchema = (obj: Record<string, any>): FunctionDeclarationSchemaProperty => {
   // Filter out unsupported keys for Gemini
@@ -432,6 +431,9 @@ export async function parseAndCallTools(
   const toolResults: string[] = []
   // process tool use
   const tools = parseToolUse(content, mcpTools || [])
+  if (!tools || tools.length === 0) {
+    return toolResults
+  }
   for (let i = 0; i < tools.length; i++) {
     const tool = tools[i]
     upsertMCPToolResponse(toolResponses, { id: `${tool.id}-${i}`, tool: tool.tool, status: 'invoking' }, onChunk)
