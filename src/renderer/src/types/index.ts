@@ -336,6 +336,8 @@ export type WebSearchProvider = {
   apiKey?: string
   apiHost?: string
   engines?: string[]
+  contentLimit?: number
+  usingBrowser?: boolean
 }
 
 export type WebSearchResponse = {

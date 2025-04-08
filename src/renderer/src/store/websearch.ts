@@ -35,6 +35,11 @@ const initialState: WebSearchState = {
       id: 'exa',
       name: 'Exa',
       apiKey: ''
+    },
+    {
+      id: 'default',
+      name: 'Default',
+      apiKey: ''
     }
   ],
   searchWithTime: true,
