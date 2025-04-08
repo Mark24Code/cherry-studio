@@ -1,3 +1,4 @@
+import { Readability } from '@mozilla/readability'
 import { nanoid } from '@reduxjs/toolkit'
 import { WebSearchProvider, WebSearchResponse, WebSearchResult } from '@renderer/types'
 import TurndownService from 'turndown'
@@ -12,7 +13,7 @@ export default class DefaultProvider extends BaseWebSearchProvider {
   constructor(provider: WebSearchProvider) {
     super(provider)
     this.usingBrowser = provider.usingBrowser ?? false
-    this.contentLimit = provider.contentLimit ?? 10000
+    this.contentLimit = provider.contentLimit ?? -1
   }
 
   public async search(
@@ -45,15 +46,8 @@ export default class DefaultProvider extends BaseWebSearchProvider {
       // Fetch content for each URL concurrently
       const fetchPromises = urlsToVisit.map(async (currentUrl) => {
         console.log(`Fetching content for ${currentUrl}...`)
-        // Use fetchPageContentByBrowser to fetch the content
-        let result: WebSearchResult
-        if (this.usingBrowser) {
-          result = await this.fetchPageContentByBrowser(currentUrl)
-        } else {
-          result = await this.fetchPageContent(currentUrl)
-        }
-        // console.log(`Fetched content for ${currentUrl}:`, result)
-        if (result.content.length > this.contentLimit) {
+        const result = await this.fetchPageContent(currentUrl, this.usingBrowser)
+        if (this.contentLimit != -1 && result.content.length > this.contentLimit) {
           result.content = result.content.slice(0, this.contentLimit) + '...'
         }
         return result
@@ -72,28 +66,36 @@ export default class DefaultProvider extends BaseWebSearchProvider {
     }
   }
 
-  private async fetchPageContent(url: string): Promise<WebSearchResult> {
+  private async fetchPageContent(url: string, usingBrowser: boolean = false): Promise<WebSearchResult> {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
 
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        },
-        signal: controller.signal
-      })
+      let html: string
+      if (usingBrowser) {
+        html = await window.api.searchService.openUrlInSearchWindow(`search-window-${nanoid()}`, url)
+      } else {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
+          signal: controller.signal
+        })
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`)
+        }
+        html = await response.text()
+      }
 
       clearTimeout(timeoutId) // Clear the timeout if fetch completes successfully
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`)
-      }
-      const html = await response.text()
-      const markdown = this.turndownService.turndown(html)
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(html, 'text/html')
+      const article = new Readability(doc).parse()
+      console.log('Parsed article:', article)
+      const markdown = this.turndownService.turndown(article?.content || '')
       return {
-        title: this.extractTitleFromContent(html) || url,
+        title: article?.title || url,
         url: url,
         content: markdown || 'Error fetching content'
       }
@@ -104,35 +106,6 @@ export default class DefaultProvider extends BaseWebSearchProvider {
         url: url,
         content: 'Error fetching content'
       }
-    }
-  }
-
-  private async fetchPageContentByBrowser(url: string): Promise<WebSearchResult> {
-    try {
-      const response = await window.api.searchService.openUrlInSearchWindow(`search-window-${nanoid()}`, url)
-      const markdown = this.turndownService.turndown(response)
-      return {
-        title: this.extractTitleFromContent(response) || url,
-        url: url,
-        content: markdown || 'no content'
-      }
-    } catch (e: unknown) {
-      console.error(`Failed to fetch ${url}`, e)
-      return {
-        title: url,
-        url: url,
-        content: 'Error fetching content'
-      }
-    }
-  }
-  private extractTitleFromContent(htmlContent: string): string | null {
-    try {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(htmlContent, 'text/html')
-      const titleElement = doc.querySelector('title')
-      return titleElement?.textContent || null
-    } catch {
-      return null
     }
   }
 
