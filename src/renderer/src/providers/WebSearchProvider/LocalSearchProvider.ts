@@ -2,8 +2,8 @@ import { Readability } from '@mozilla/readability'
 import { nanoid } from '@reduxjs/toolkit'
 import { WebSearchProvider, WebSearchResponse, WebSearchResult } from '@renderer/types'
 import TurndownService from 'turndown'
-import { URL } from 'url'
 
+// Remove the URL import as we'll use the global URL constructor
 import BaseWebSearchProvider from './BaseWebSearchProvider'
 
 export default class LocalSearchProvider extends BaseWebSearchProvider {
@@ -28,8 +28,8 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
       if (!this.provider.url) {
         throw new Error('Provider URL is required')
       }
-
-      excludeDomains.push(new URL(this.provider.url).host)
+      console.log(this.provider, new URL(this.provider.url))
+      // const host = new URL(this.provider.url).host
 
       const cleanedQuery = query.split('\r\n')[1] ?? query
       const url = this.provider.url.replace('%s', encodeURIComponent(cleanedQuery))
@@ -42,9 +42,7 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
 
       // Filter out Google URLs
       const uniqueUrls = [...new Set(urls)]
-      const validUrls = uniqueUrls.filter(
-        (url) => !url.includes('google.com') && !excludeDomains.some((domain) => url.includes(domain))
-      )
+      const validUrls = uniqueUrls.filter((url) => !excludeDomains.some((domain) => url.includes(domain)))
       console.log('Valid URLs:', validUrls)
 
       // Limit to maxResults

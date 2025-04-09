@@ -31,7 +31,7 @@ class WebSearchService {
       return false
     }
 
-    if (provider.id === 'default') {
+    if (provider.id.startsWith('local-')) {
       return true
     }
 

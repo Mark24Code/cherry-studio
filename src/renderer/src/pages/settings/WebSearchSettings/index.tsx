@@ -1,8 +1,9 @@
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useDefaultWebSearchProvider, useWebSearchProviders } from '@renderer/hooks/useWebSearchProviders'
+import { defaultWebSearchProviders } from '@renderer/store/websearch'
 import { WebSearchProvider } from '@renderer/types'
 import { Select } from 'antd'
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SettingContainer, SettingDivider, SettingGroup, SettingRow, SettingRowTitle, SettingTitle } from '..'
@@ -11,11 +12,15 @@ import BlacklistSettings from './BlacklistSettings'
 import WebSearchProviderSetting from './WebSearchProviderSetting'
 
 const WebSearchSettings: FC = () => {
-  const { providers } = useWebSearchProviders()
+  const { providers, addWebSearchProvider } = useWebSearchProviders()
   const { provider: defaultProvider, setDefaultProvider } = useDefaultWebSearchProvider()
   const { t } = useTranslation()
   const [selectedProvider, setSelectedProvider] = useState<WebSearchProvider | undefined>(defaultProvider)
   const { theme: themeMode } = useTheme()
+
+  useEffect(() => {
+    defaultWebSearchProviders.map((p) => addWebSearchProvider(p))
+  })
 
   function updateSelectedWebSearchProvider(providerId: string) {
     const provider = providers.find((p) => p.id === providerId)
