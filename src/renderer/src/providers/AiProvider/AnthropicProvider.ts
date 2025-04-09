@@ -290,7 +290,7 @@ export default class AnthropicProvider extends BaseProvider {
           .on('finalMessage', async (message) => {
             const content = message.content[0]
             if (content && content.type === 'text') {
-              const toolResults = await parseAndCallTools(content.text, toolResponses, onChunk, mcpTools)
+              const toolResults = await parseAndCallTools(content.text, toolResponses, onChunk, idx, mcpTools)
               if (toolResults.length > 0) {
                 userMessages.push({
                   role: message.role,

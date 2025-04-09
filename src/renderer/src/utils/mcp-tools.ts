@@ -426,6 +426,7 @@ export async function parseAndCallTools(
   content: string,
   toolResponses: MCPToolResponse[],
   onChunk: CompletionsParams['onChunk'],
+  idx: number,
   mcpTools?: MCPTool[]
 ): Promise<string[]> {
   const toolResults: string[] = []
@@ -436,7 +437,7 @@ export async function parseAndCallTools(
   }
   for (let i = 0; i < tools.length; i++) {
     const tool = tools[i]
-    upsertMCPToolResponse(toolResponses, { id: `${tool.id}-${i}`, tool: tool.tool, status: 'invoking' }, onChunk)
+    upsertMCPToolResponse(toolResponses, { id: `${tool.id}-${idx}-${i}`, tool: tool.tool, status: 'invoking' }, onChunk)
   }
 
   const toolPromises = tools.map(async (tool, i) => {
@@ -449,7 +450,7 @@ export async function parseAndCallTools(
           `.trim()
     upsertMCPToolResponse(
       toolResponses,
-      { id: `${tool.id}-${i}`, tool: tool.tool, status: 'done', response: toolCallResponse },
+      { id: `${tool.id}-${idx}-${i}`, tool: tool.tool, status: 'done', response: toolCallResponse },
       onChunk
     )
     return result

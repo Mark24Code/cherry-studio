@@ -383,7 +383,7 @@ export default class OpenAIProvider extends BaseProvider {
     let firstChunk = true
 
     const processToolUses = async (content: string, idx: number) => {
-      const toolResults = await parseAndCallTools(content, toolResponses, onChunk, mcpTools)
+      const toolResults = await parseAndCallTools(content, toolResponses, onChunk, idx, mcpTools)
 
       if (toolResults.length > 0) {
         reqMessages.push({

@@ -310,7 +310,7 @@ export default class GeminiProvider extends BaseProvider {
       let time_first_token_millsec = 0
 
       const processToolUses = async (content: string, idx: number) => {
-        const toolResults = await parseAndCallTools(content, toolResponses, onChunk, mcpTools)
+        const toolResults = await parseAndCallTools(content, toolResponses, onChunk, idx, mcpTools)
         if (toolResults && toolResults.length > 0) {
           history.push(messageContents)
           const newChat = geminiModel.startChat({ history })
