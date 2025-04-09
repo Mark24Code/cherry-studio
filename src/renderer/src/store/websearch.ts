@@ -40,6 +40,30 @@ const initialState: WebSearchState = {
       id: 'default',
       name: 'Default',
       apiKey: ''
+    },
+    {
+      id: 'local-google',
+      name: 'Google',
+      apiKey: '',
+      url: 'https://www.google.com/search?q=%s'
+    },
+    {
+      id: 'local-bing',
+      name: 'Bing',
+      apiKey: '',
+      url: 'https://www.bing.com/search?q=%s'
+    },
+    {
+      id: 'local-duckduckgo',
+      name: 'DuckDuckGo',
+      apiKey: '',
+      url: 'https://duckduckgo.com/?q=%s'
+    },
+    {
+      id: 'local-baidu',
+      name: 'Baidu',
+      apiKey: '',
+      url: 'https://www.baidu.com/s?wd=%s'
     }
   ],
   searchWithTime: true,
