@@ -38,7 +38,6 @@ export class SearchService {
     newWindow.on('closed', () => {
       delete this.searchWindows[uid]
     })
-    await newWindow.loadURL('https://www.google.com') // Replace with your desired URL
     return newWindow
   }
 
@@ -54,7 +53,7 @@ export class SearchService {
     }
   }
 
-  public async openUrlInSearchWindow(uid: string, url: string): Promise<string> {
+  public async openUrlInSearchWindow(uid: string, url: string): Promise<any> {
     let window = this.searchWindows[uid]
     if (window) {
       await window.loadURL(url)
@@ -64,6 +63,17 @@ export class SearchService {
     }
 
     // Get the page content after loading the URL
+    // Wait for the page to fully load before getting the content
+    await new Promise<void>((resolve) => {
+      const loadTimeout = setTimeout(() => resolve(), 10000) // 10 second timeout
+      window.webContents.once('did-finish-load', () => {
+        clearTimeout(loadTimeout)
+        // Small delay to ensure JavaScript has executed
+        setTimeout(resolve, 500)
+      })
+    })
+
+    // Get the page content after ensuring it's fully loaded
     const content = await window.webContents.executeJavaScript('document.documentElement.outerHTML')
     return content
   }

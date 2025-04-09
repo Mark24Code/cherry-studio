@@ -51,13 +51,7 @@ const initialState: WebSearchState = {
       id: 'local-bing',
       name: 'Bing',
       apiKey: '',
-      url: 'https://www.bing.com/search?q=%s'
-    },
-    {
-      id: 'local-duckduckgo',
-      name: 'DuckDuckGo',
-      apiKey: '',
-      url: 'https://duckduckgo.com/?q=%s'
+      url: 'https://cn.bing.com/search?q=%s&ensearch=1'
     },
     {
       id: 'local-baidu',

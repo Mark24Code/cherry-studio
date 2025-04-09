@@ -3,8 +3,14 @@ import { nanoid } from '@reduxjs/toolkit'
 import { WebSearchProvider, WebSearchResponse, WebSearchResult } from '@renderer/types'
 import TurndownService from 'turndown'
 
-// Remove the URL import as we'll use the global URL constructor
 import BaseWebSearchProvider from './BaseWebSearchProvider'
+
+export interface SearchItem {
+  title: string
+  url: string
+}
+
+const noContent = 'No content found'
 
 export default class LocalSearchProvider extends BaseWebSearchProvider {
   private turndownService: TurndownService = new TurndownService()
@@ -21,6 +27,7 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
     maxResults: number = 15,
     excludeDomains: string[] = []
   ): Promise<WebSearchResponse> {
+    const uid = nanoid()
     try {
       if (!query.trim()) {
         throw new Error('Search query cannot be empty')
@@ -28,30 +35,28 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
       if (!this.provider.url) {
         throw new Error('Provider URL is required')
       }
-      console.log(this.provider, new URL(this.provider.url))
-      // const host = new URL(this.provider.url).host
 
       const cleanedQuery = query.split('\r\n')[1] ?? query
       const url = this.provider.url.replace('%s', encodeURIComponent(cleanedQuery))
-      // const url = 'https://www.google.com/search?q=' + encodeURIComponent(cleanedQuery)
-
-      const content = await window.api.searchService.openUrlInSearchWindow(nanoid(), url!)
+      const content = await window.api.searchService.openUrlInSearchWindow(uid, url)
 
       // Parse the content to extract URLs and metadata
-      const { urls } = this.parseHtmlContent(content)
+      const searchItems = this.parseValidUrls(content).slice(0, maxResults)
+      console.log('Total search items:', searchItems)
 
-      // Filter out Google URLs
-      const uniqueUrls = [...new Set(urls)]
-      const validUrls = uniqueUrls.filter((url) => !excludeDomains.some((domain) => url.includes(domain)))
-      console.log('Valid URLs:', validUrls)
-
-      // Limit to maxResults
-      const urlsToVisit = validUrls.slice(0, maxResults)
+      const validItems = searchItems
+        .filter(
+          (item) =>
+            (item.url.startsWith('http') || item.url.startsWith('https')) &&
+            excludeDomains.includes(new URL(item.url).host) === false
+        )
+        .slice(0, maxResults)
+      // console.log('Valid search items:', validItems)
 
       // Fetch content for each URL concurrently
-      const fetchPromises = urlsToVisit.map(async (currentUrl) => {
-        console.log(`Fetching content for ${currentUrl}...`)
-        const result = await this.fetchPageContent(currentUrl, this.provider.usingBrowser)
+      const fetchPromises = validItems.map(async (item) => {
+        // console.log(`Fetching content for ${item.url}...`)
+        const result = await this.fetchPageContent(item.url, this.provider.usingBrowser)
         if (
           this.provider.contentLimit &&
           this.provider.contentLimit != -1 &&
@@ -67,12 +72,19 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
 
       return {
         query: query,
-        results: results.filter((result) => result.content != 'Error fetching content')
+        results: results.filter((result) => result.content != noContent)
       }
     } catch (error) {
-      console.error('Tavily search failed:', error)
+      console.error('Local search failed:', error)
       throw new Error(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      await window.api.searchService.closeSearchWindow(uid)
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected parseValidUrls(htmlContent: string): SearchItem[] {
+    throw new Error('Not implemented')
   }
 
   private async fetchPageContent(url: string, usingBrowser: boolean = false): Promise<WebSearchResult> {
@@ -101,60 +113,20 @@ export default class LocalSearchProvider extends BaseWebSearchProvider {
       const parser = new DOMParser()
       const doc = parser.parseFromString(html, 'text/html')
       const article = new Readability(doc).parse()
-      console.log('Parsed article:', article)
+      // console.log('Parsed article:', article)
       const markdown = this.turndownService.turndown(article?.content || '')
       return {
         title: article?.title || url,
         url: url,
-        content: markdown || 'Error fetching content'
+        content: markdown || noContent
       }
     } catch (e: unknown) {
       console.error(`Failed to fetch ${url}`, e)
       return {
         title: url,
         url: url,
-        content: 'Error fetching content'
+        content: noContent
       }
     }
-  }
-
-  private parseHtmlContent(htmlContent: string): { urls: string[]; metadata: Record<string, string> } {
-    const urls: string[] = []
-    const metadata: Record<string, string> = {}
-
-    try {
-      // Parse HTML string into a DOM document
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(htmlContent, 'text/html')
-
-      // Extract URLs from all anchor tags
-      const links = doc.querySelectorAll('a')
-      links.forEach((link) => {
-        const href = link.getAttribute('href')
-        if (href && href.startsWith('http')) {
-          urls.push(href)
-        }
-      })
-
-      // Extract metadata from meta tags
-      const metaTags = doc.querySelectorAll('meta')
-      metaTags.forEach((meta) => {
-        const name = meta.getAttribute('name') || meta.getAttribute('property')
-        const content = meta.getAttribute('content')
-        if (name && content) {
-          metadata[name] = content
-        }
-      })
-
-      // Extract title
-      const title = doc.querySelector('title')
-      if (title && title.textContent) {
-        metadata['title'] = title.textContent
-      }
-    } catch (error) {
-      console.error('Error parsing HTML content:', error)
-    }
-
-    return { urls, metadata }
   }
 }
