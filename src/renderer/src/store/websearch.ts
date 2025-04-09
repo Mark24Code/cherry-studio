@@ -37,11 +37,6 @@ const initialState: WebSearchState = {
       apiKey: ''
     },
     {
-      id: 'default',
-      name: 'Default',
-      apiKey: ''
-    },
-    {
       id: 'local-google',
       name: 'Google',
       apiKey: '',
