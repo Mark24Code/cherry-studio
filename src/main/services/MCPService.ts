@@ -256,18 +256,23 @@ class McpService {
   private async listToolsImpl(server: MCPServer): Promise<MCPTool[]> {
     Logger.info(`[MCP] Listing tools for server: ${server.name}`)
     const client = await this.initClient(server)
-    const { tools } = await client.listTools()
-    const serverTools: MCPTool[] = []
-    tools.map((tool: any) => {
-      const serverTool: MCPTool = {
-        ...tool,
-        id: `f${nanoid()}`,
-        serverId: server.id,
-        serverName: server.name
-      }
-      serverTools.push(serverTool)
-    })
-    return serverTools
+    try {
+      const { tools } = await client.listTools()
+      const serverTools: MCPTool[] = []
+      tools.map((tool: any) => {
+        const serverTool: MCPTool = {
+          ...tool,
+          id: `f${nanoid()}`,
+          serverId: server.id,
+          serverName: server.name
+        }
+        serverTools.push(serverTool)
+      })
+      return serverTools
+    } catch (error) {
+      Logger.error(`[MCP] Failed to list tools for server: ${server.name}`, error)
+      return []
+    }
   }
 
   async listTools(_: Electron.IpcMainInvokeEvent, server: MCPServer) {
@@ -280,12 +285,8 @@ class McpService {
       5 * 60 * 1000, // 5 minutes TTL
       `[MCP] Tools from ${server.name}`
     )
-    try {
-      return cachedListTools(server)
-    } catch (error) {
-      Logger.error(`[MCP] Failed to list tools for server: ${server.name}`, error)
-      return []
-    }
+
+    return cachedListTools(server)
   }
 
   /**
@@ -321,14 +322,19 @@ class McpService {
   private async listPromptsImpl(server: MCPServer): Promise<MCPPrompt[]> {
     Logger.info(`[MCP] Listing prompts for server: ${server.name}`)
     const client = await this.initClient(server)
-    const { prompts } = await client.listPrompts()
-    const serverPrompts = prompts.map((prompt: any) => ({
-      ...prompt,
-      id: `p${nanoid()}`,
-      serverId: server.id,
-      serverName: server.name
-    }))
-    return serverPrompts
+    try {
+      const { prompts } = await client.listPrompts()
+      const serverPrompts = prompts.map((prompt: any) => ({
+        ...prompt,
+        id: `p${nanoid()}`,
+        serverId: server.id,
+        serverName: server.name
+      }))
+      return serverPrompts
+    } catch (error) {
+      Logger.error(`[MCP] Failed to list prompts for server: ${server.name}`, error)
+      return []
+    }
   }
 
   /**
@@ -344,12 +350,7 @@ class McpService {
       60 * 60 * 1000, // 60 minutes TTL
       `[MCP] Prompts from ${server.name}`
     )
-    try {
-      return cachedListPrompts(server)
-    } catch (error) {
-      Logger.error(`[MCP] Failed to list prompts for server: ${server.name}`, error)
-      return []
-    }
+    return cachedListPrompts(server)
   }
 
   /**
@@ -372,22 +373,17 @@ class McpService {
     _: Electron.IpcMainInvokeEvent,
     { server, name, args }: { server: MCPServer; name: string; args?: Record<string, any> }
   ): Promise<GetMCPPromptResponse> {
-    try {
-      const cachedGetPrompt = withCache<[MCPServer, string, Record<string, any> | undefined], GetMCPPromptResponse>(
-        this.getPromptImpl.bind(this),
-        (server, name, args) => {
-          const serverKey = this.getServerKey(server)
-          const argsKey = args ? JSON.stringify(args) : 'no-args'
-          return `mcp:get_prompt:${serverKey}:${name}:${argsKey}`
-        },
-        30 * 60 * 1000, // 30 minutes TTL
-        `[MCP] Prompt ${name} from ${server.name}`
-      )
-      return await cachedGetPrompt(server, name, args)
-    } catch (error) {
-      Logger.error(`[MCP] Error getting prompt ${name} from ${server.name}:`, error)
-      throw error
-    }
+    const cachedGetPrompt = withCache<[MCPServer, string, Record<string, any> | undefined], GetMCPPromptResponse>(
+      this.getPromptImpl.bind(this),
+      (server, name, args) => {
+        const serverKey = this.getServerKey(server)
+        const argsKey = args ? JSON.stringify(args) : 'no-args'
+        return `mcp:get_prompt:${serverKey}:${name}:${argsKey}`
+      },
+      30 * 60 * 1000, // 30 minutes TTL
+      `[MCP] Prompt ${name} from ${server.name}`
+    )
+    return await cachedGetPrompt(server, name, args)
   }
 
   /**
