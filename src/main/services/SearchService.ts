@@ -19,7 +19,7 @@ export class SearchService {
     const newWindow = new BrowserWindow({
       width: 800,
       height: 600,
-      show: true,
+      show: false,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
