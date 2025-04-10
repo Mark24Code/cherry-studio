@@ -409,9 +409,12 @@ export interface MCPPromptArguments {
 }
 
 export interface MCPPrompt {
+  id: string
   name: string
   description?: string
   arguments?: MCPPromptArguments[]
+  serverId: string
+  serverName: string
 }
 
 export interface GetMCPPromptResponse {

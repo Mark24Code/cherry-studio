@@ -280,7 +280,12 @@ class McpService {
       5 * 60 * 1000, // 5 minutes TTL
       `[MCP] Tools from ${server.name}`
     )
-    return cachedListTools(server)
+    try {
+      return cachedListTools(server)
+    } catch (error) {
+      Logger.error(`[MCP] Failed to list tools for server: ${server.name}`, error)
+      return []
+    }
   }
 
   /**
@@ -339,7 +344,12 @@ class McpService {
       60 * 60 * 1000, // 60 minutes TTL
       `[MCP] Prompts from ${server.name}`
     )
-    return cachedListPrompts(server)
+    try {
+      return cachedListPrompts(server)
+    } catch (error) {
+      Logger.error(`[MCP] Failed to list prompts for server: ${server.name}`, error)
+      return []
+    }
   }
 
   /**
