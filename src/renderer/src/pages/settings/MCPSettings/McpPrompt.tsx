@@ -1,5 +1,5 @@
 import { MCPPrompt } from '@renderer/types'
-import { Collapse, Empty, Flex, Tag, Typography } from 'antd'
+import { Collapse, Descriptions, Empty, Flex, Tag, Tooltip, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -16,22 +16,31 @@ const MCPPromptsSection = ({ prompts }: MCPPromptsSectionProps) => {
 
     return (
       <div style={{ marginTop: 12 }}>
-        <Typography.Title level={5}>{t('settings.mcp.prompts.arguments')}:</Typography.Title>
-        <div>
+        <Typography.Title level={5}>{t('settings.mcp.tools.inputSchema')}:</Typography.Title>
+        <Descriptions bordered size="small" column={1} style={{ marginTop: 8 }}>
           {prompt.arguments.map((arg, index) => (
-            <Flex key={index} vertical gap={4} style={{ marginBottom: 8, paddingLeft: 8 }}>
-              <Flex align="center" gap={8}>
-                <Typography.Text strong>{arg.name}</Typography.Text>
-                {arg.required && <Tag color="red">Required</Tag>}
+            <Descriptions.Item
+              key={index}
+              label={
+                <Flex align="center" gap={8}>
+                  <Typography.Text strong>{arg.name}</Typography.Text>
+                  {arg.required && (
+                    <Tooltip title="Required field">
+                      <Tag color="red">Required</Tag>
+                    </Tooltip>
+                  )}
+                </Flex>
+              }>
+              <Flex vertical gap={4}>
+                {arg.description && (
+                  <Typography.Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 4 }}>
+                    {arg.description}
+                  </Typography.Paragraph>
+                )}
               </Flex>
-              {arg.description && (
-                <Typography.Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 4 }}>
-                  {arg.description}
-                </Typography.Paragraph>
-              )}
-            </Flex>
+            </Descriptions.Item>
           ))}
-        </div>
+        </Descriptions>
       </div>
     )
   }
@@ -69,7 +78,6 @@ const MCPPromptsSection = ({ prompts }: MCPPromptsSectionProps) => {
 
 const Section = styled.div`
   margin-top: 8px;
-  border-top: 1px solid var(--color-border);
   padding-top: 8px;
 `
 

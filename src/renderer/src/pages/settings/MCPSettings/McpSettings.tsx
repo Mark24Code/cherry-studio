@@ -138,6 +138,7 @@ const McpSettings: React.FC<Props> = ({ server }) => {
           content: t('settings.mcp.promptsLoadError') + formatError(error),
           key: 'mcp-prompts-error'
         })
+        setPrompts([])
       } finally {
         setLoadingServer(null)
       }

@@ -1105,7 +1105,13 @@
         "registryDefault": "Default",
         "not_support": "Model not supported",
         "user": "User",
-        "system": "System"
+        "system": "System",
+        "tabs": {
+          "general": "General",
+          "tools": "Tools",
+          "prompts": "Prompts",
+          "resources": "Resources"
+        }
       },
       "messages.divider": "Show divider between messages",
       "messages.grid_columns": "Message grid display columns",
