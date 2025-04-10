@@ -1089,6 +1089,12 @@
         "url": "URL",
         "editMcpJson": "Edit MCP Configuration",
         "installHelp": "Get Installation Help",
+        "tabs": {
+          "general": "General",
+          "tools": "Tools",
+          "prompts": "Prompts",
+          "resources": "Resources"
+        },
         "tools": {
           "inputSchema": "Input Schema",
           "availableTools": "Available Tools",
@@ -1105,13 +1111,7 @@
         "registryDefault": "Default",
         "not_support": "Model not supported",
         "user": "User",
-        "system": "System",
-        "tabs": {
-          "general": "General",
-          "tools": "Tools",
-          "prompts": "Prompts",
-          "resources": "Resources"
-        }
+        "system": "System"
       },
       "messages.divider": "Show divider between messages",
       "messages.grid_columns": "Message grid display columns",
