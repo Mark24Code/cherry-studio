@@ -402,6 +402,31 @@ export interface MCPTool {
   inputSchema: MCPToolInputSchema
 }
 
+export interface MCPPromptArguments {
+  name: string
+  description?: string
+  required?: boolean
+}
+
+export interface MCPPrompt {
+  name: string
+  description?: string
+  arguments?: MCPPromptArguments[]
+}
+
+export interface GetMCPPromptResponse {
+  description?: string
+  messages: {
+    role: string
+    content: {
+      type: 'text' | 'image' | 'audio' | 'resource'
+      text?: string
+      data?: string
+      mimeType?: string
+    }
+  }[]
+}
+
 export interface MCPConfig {
   servers: MCPServer[]
 }

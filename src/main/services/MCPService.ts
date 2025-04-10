@@ -10,7 +10,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { getDefaultEnvironment, StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory'
 import { nanoid } from '@reduxjs/toolkit'
-import { MCPServer, MCPTool } from '@types'
+import { GetMCPPromptResponse, MCPPrompt, MCPServer, MCPTool } from '@types'
 import { app } from 'electron'
 import Logger from 'electron-log'
 
@@ -35,6 +35,8 @@ class McpService {
     this.initClient = this.initClient.bind(this)
     this.listTools = this.listTools.bind(this)
     this.callTool = this.callTool.bind(this)
+    this.listPrompts = this.listPrompts.bind(this)
+    this.getPrompt = this.getPrompt.bind(this)
     this.closeClient = this.closeClient.bind(this)
     this.removeServer = this.removeServer.bind(this)
     this.restartServer = this.restartServer.bind(this)
@@ -268,6 +270,50 @@ class McpService {
     const uvPath = path.join(dir, uvName)
     const bunPath = path.join(dir, bunName)
     return { dir, uvPath, bunPath }
+  }
+
+  /**
+   * List prompts available on an MCP server
+   */
+  async listPrompts(_: Electron.IpcMainInvokeEvent, server: MCPServer): Promise<MCPPrompt[]> {
+    const client = await this.initClient(server)
+    const serverKey = this.getServerKey(server)
+    const cacheKey = `mcp:list_prompts:${serverKey}`
+    if (CacheService.has(cacheKey)) {
+      Logger.info(`[MCP] Prompts from ${server.name} loaded from cache`)
+      const cachedPrompts = CacheService.get(cacheKey)
+      if (cachedPrompts && Array.isArray(cachedPrompts) && cachedPrompts.length > 0) {
+        return cachedPrompts
+      }
+    }
+    Logger.info(`[MCP] Listing prompts for server: ${server.name}`)
+    const { prompts } = await client.listPrompts()
+    const serverPrompts = prompts.map((prompt: any) => ({
+      ...prompt,
+      id: `p${nanoid()}`,
+      serverId: server.id,
+      serverName: server.name
+    }))
+    CacheService.set(cacheKey, serverPrompts, 60 * 60 * 1000) // Cache for 60 minutes
+    return serverPrompts
+  }
+
+  /**
+   * Get a specific prompt from an MCP server
+   */
+  async getPrompt(
+    _: Electron.IpcMainInvokeEvent,
+    { server, name, args }: { server: MCPServer; name: string; args?: Record<string, any> }
+  ): Promise<GetMCPPromptResponse> {
+    try {
+      Logger.info(`[MCP] Getting prompt ${name} from server: ${server.name}`)
+      const client = await this.initClient(server)
+      const result = await client.getPrompt({ name, arguments: args })
+      return result
+    } catch (error) {
+      Logger.error(`[MCP] Error getting prompt ${name} from ${server.name}:`, error)
+      throw error
+    }
   }
 
   /**
