@@ -6,6 +6,7 @@ import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electro
 
 import { registerIpc } from './ipc'
 import { configManager } from './services/ConfigManager'
+import mcpService from './services/MCPService'
 import { CHERRY_STUDIO_PROTOCOL, handleProtocolUrl, registerProtocolClient } from './services/ProtocolClient'
 import { registerShortcuts } from './services/ShortcutService'
 import { TrayService } from './services/TrayService'
@@ -90,6 +91,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('before-quit', () => {
     app.isQuitting = true
+  })
+
+  app.on('will-quit', async (event) => {
+    event.preventDefault()
+    await mcpService.cleanup()
   })
 
   // In this file you can include the rest of your app"s specific main process
