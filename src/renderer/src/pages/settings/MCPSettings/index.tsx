@@ -175,6 +175,7 @@ const ServersGrid = styled.div`
   gap: 16px;
   width: 100%;
   overflow-y: auto;
+  padding: 2px;
 `
 
 const ServerCard = styled.div`
