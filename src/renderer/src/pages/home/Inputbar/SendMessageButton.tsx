@@ -3,11 +3,13 @@ import { FC } from 'react'
 interface Props {
   disabled: boolean
   sendMessage: () => void
+  ref: any
 }
 
-const SendMessageButton: FC<Props> = ({ disabled, sendMessage }) => {
+const SendMessageButton: FC<Props> = ({ disabled, sendMessage, ref}) => {
   return (
     <i
+      ref={ref}
       className="iconfont icon-ic_send"
       onClick={sendMessage}
       style={{

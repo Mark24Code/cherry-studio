@@ -45,7 +45,7 @@ import TextArea, { TextAreaRef } from 'antd/es/input/TextArea'
 import dayjs from 'dayjs'
 import Logger from 'electron-log/renderer'
 import { debounce, isEmpty } from 'lodash'
-import React, { CSSProperties, FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { CSSProperties, FC, Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
@@ -90,6 +90,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const [estimateTokenCount, setEstimateTokenCount] = useState(0)
   const [contextCount, setContextCount] = useState({ current: 0, max: 0 })
   const textareaRef = useRef<TextAreaRef>(null)
+  const sendButtonRef = useRef<Ref>(null)
   const [files, setFiles] = useState<FileType[]>(_files)
   const { t } = useTranslation()
   const containerRef = useRef(null)
@@ -207,6 +208,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       userMessage.usage = await estimateMessageUsage(userMessage)
       currentMessageId.current = userMessage.id
 
+      // MARK
       dispatch(
         _sendMessage(userMessage, assistant, topic, {
           mentions: mentionModels
@@ -693,6 +695,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     clearTopic()
   })
 
+
   useEffect(() => {
     const _setEstimateTokenCount = debounce(setEstimateTokenCount, 100, { leading: false, trailing: true })
     const unsubscribes = [
@@ -864,6 +867,28 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
 
   const isExpended = expended || !!textareaHeight
 
+  // Hackathon 
+  // mock user send message
+  const MockUserSendMessage = (content) => {
+    textareaRef?.current?.focus()
+    setText(content)
+    setTimeout(() => {
+      sendButtonRef?.current?.click();
+    }, 800)
+  }
+
+  useEffect(() => {
+    // window.MockUserSendMessage = MockUserSendMessage;
+    window.electron.ipcRenderer.on('mock-user-send-message', (_event, content) => {
+      // content 会被包装成 { data: ""}
+      console.log('[mock-user-send-message]', content["data"])
+      MockUserSendMessage(content["data"])
+    })
+  },[])
+
+
+
+  
   return (
     <Container onDragOver={handleDragOver} onDrop={handleDrop} className="inputbar">
       <NarrowLayout style={{ width: '100%' }}>
@@ -1003,7 +1028,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
                   </ToolbarButton>
                 </Tooltip>
               )}
-              {!loading && <SendMessageButton sendMessage={sendMessage} disabled={loading || inputEmpty} />}
+              {!loading && <SendMessageButton ref={sendButtonRef} sendMessage={sendMessage} disabled={loading || inputEmpty} />}
             </ToolbarMenu>
           </Toolbar>
         </InputBarContainer>

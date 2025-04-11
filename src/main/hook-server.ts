@@ -10,15 +10,15 @@ export function createHookServer(mainWindow: Electron.BrowserWindow, app: Electr
       });
       req.on('end', () => {
         try {
-          const data = JSON.parse(body);
+          const resp = JSON.parse(body);
           // 通过 IPC 将消息发送到渲染进程
-          mainWindow.webContents.send('external-message', data);
-          console.log('Received message from HTTP request:', data);
+          mainWindow.webContents.send('external-message', resp);
+          console.log('Received message from HTTP request:', resp);
           res.writeHead(200, { 'Content-Type': 'application/json' });
 
           // 模拟用户发送消息
           // 发送事件给 Inputbar.tsx
-          mainWindow.webContents.send('mock-user-send-message', data);
+          mainWindow.webContents.send('mock-user-send-message', resp["data"]);
           res.end(JSON.stringify({ success: true }));
         } catch (error) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
