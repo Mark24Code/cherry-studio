@@ -881,8 +881,8 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     // window.MockUserSendMessage = MockUserSendMessage;
     window.electron.ipcRenderer.on('mock-user-send-message', (_event, content) => {
       // content 会被包装成 { data: ""}
-      console.log('[mock-user-send-message]', content["data"])
-      MockUserSendMessage(content["data"])
+      console.log('[mock-user-send-message]', content)
+      MockUserSendMessage(content)
     })
   },[])
 

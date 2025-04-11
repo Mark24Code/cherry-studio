@@ -7,6 +7,8 @@ import { Shortcut, ThemeMode } from '@types'
 import { BrowserWindow, ipcMain, session, shell } from 'electron'
 import log from 'electron-log'
 
+import { SEND_MESSAGE_URL } from './config'
+
 import { titleBarOverlayDark, titleBarOverlayLight } from './config'
 import AppUpdater from './services/AppUpdater'
 import BackupManager from './services/BackupManager'
@@ -36,6 +38,8 @@ const obsidianVaultService = new ObsidianVaultService()
 
 export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   const appUpdater = new AppUpdater(mainWindow)
+
+  ipcMain.handle(IpcChannel.App_GetSendMessageUrl, () => SEND_MESSAGE_URL)
 
   ipcMain.handle(IpcChannel.App_Info, () => ({
     version: app.getVersion(),

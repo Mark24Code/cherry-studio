@@ -35,6 +35,12 @@ import { EVENT_NAMES, EventEmitter } from './EventService'
 import { filterContextMessages, filterMessages, filterUsefulMessages } from './MessagesService'
 import { estimateMessagesUsage } from './TokenService'
 import WebSearchService from './WebSearchService'
+import axios from 'axios'
+
+// 从主进程获取消息发送URL
+async function getSendMessageUrl() {
+  return await window.api.getSendMessageUrl()
+}
 
 export async function fetchChatCompletion({
   message,
@@ -254,7 +260,19 @@ export async function fetchChatCompletion({
         }
       }
     }
+  
     console.log('message', message)
+    
+    try {
+      const sendMessageUrl = await getSendMessageUrl()
+      console.log('[hackathon] send -> POST ', sendMessageUrl)
+      axios.post(sendMessageUrl, {
+        data:  message["content"]
+      })
+      console.log('[hackathon] sended ')
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    }
   } catch (error: any) {
     if (isAbortError(error)) {
       message.status = 'paused'

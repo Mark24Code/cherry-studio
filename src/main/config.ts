@@ -10,6 +10,9 @@ if (isDev) {
 
 export const DATA_PATH = getDataPath()
 
+// 从环境变量获取消息发送URL
+export const SEND_MESSAGE_URL = process.env.HAKCATHON_SEND_URL
+
 export const titleBarOverlayDark = {
   height: 40,
   color: 'rgba(0,0,0,0)',

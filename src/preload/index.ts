@@ -7,6 +7,7 @@ import { CreateDirectoryOptions } from 'webdav'
 
 // Custom APIs for renderer
 const api = {
+  getSendMessageUrl:() => ipcRenderer.invoke(IpcChannel.App_GetSendMessageUrl),
   getAppInfo: () => ipcRenderer.invoke(IpcChannel.App_Info),
   reload: () => ipcRenderer.invoke(IpcChannel.App_Reload),
   setProxy: (proxy: string) => ipcRenderer.invoke(IpcChannel.App_Proxy, proxy),

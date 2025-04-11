@@ -17,6 +17,7 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      getSendMessageUrl: () => Promise<string>
       getAppInfo: () => Promise<AppInfo>
       checkForUpdate: () => Promise<{ currentVersion: string; updateInfo: UpdateInfo | null }>
       showUpdateDialog: () => Promise<void>
