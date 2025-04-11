@@ -10,6 +10,7 @@ import { CHERRY_STUDIO_PROTOCOL, handleProtocolUrl, registerProtocolClient } fro
 import { registerShortcuts } from './services/ShortcutService'
 import { TrayService } from './services/TrayService'
 import { windowService } from './services/WindowService'
+import { createHookServer } from './hook-server'
 
 // Check for single instance lock
 if (!app.requestSingleInstanceLock()) {
@@ -56,6 +57,9 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle(IpcChannel.System_GetDeviceType, () => {
       return process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows' : 'linux'
     })
+
+
+    createHookServer(mainWindow, app);
   })
 
   registerProtocolClient(app)
